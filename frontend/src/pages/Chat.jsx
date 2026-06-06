@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { API_BASE_URL } from '../config';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -16,7 +17,7 @@ const Chat = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
@@ -32,7 +33,7 @@ const Chat = () => {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/messages?chatWith=${activeChat}`, {
+      const response = await fetch(`${API_BASE_URL}/api/messages?chatWith=${activeChat}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -61,7 +62,7 @@ const Chat = () => {
     if (!newMessage.trim()) return;
 
     try {
-      await fetch('http://localhost:3000/api/messages', {
+      await fetch(`${API_BASE_URL}/api/messages`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

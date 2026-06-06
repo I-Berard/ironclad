@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { API_BASE_URL } from '../config';
 
 const Profile = () => {
   const { username } = useParams();
@@ -13,7 +14,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/profile/${username}`);
+        const response = await fetch(`${API_BASE_URL}/api/profile/${username}`);
         const data = await response.json();
         if (response.ok) {
           setProfile(data);
@@ -31,7 +32,7 @@ const Profile = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/api/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/profile`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
