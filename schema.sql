@@ -1,8 +1,6 @@
-CREATE DATABASE IF NOT EXISTS ironclad_chat;
-USE ironclad_chat;
 
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     bio TEXT,
@@ -10,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INT NOT NULL,
     receiver_id INT DEFAULT NULL,
     username VARCHAR(255) NOT NULL,
@@ -22,4 +20,4 @@ CREATE TABLE IF NOT EXISTS messages (
 
 -- Insert a default admin user for testing the SQLi bypass
 -- Password is 'admin123' (not hashed intentionally for demo simplicity)
-INSERT IGNORE INTO users (username, password, bio) VALUES ('admin', 'admin123', 'System Administrator');
+INSERT OR IGNORE INTO users (username, password, bio) VALUES ('admin', 'admin123', 'System Administrator');

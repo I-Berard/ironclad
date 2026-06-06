@@ -1,7 +1,9 @@
 const express = require('express');
-const mysql = require('mysql2');
+const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -11,35 +13,57 @@ app.use(cors());
 app.use(express.json());
 
 // Database connection
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  multipleStatements: true // Often helps with more complex SQLi demos
-});
-
-db.connect((err) => {
+const dbFile = path.join(__dirname, 'database.sqlite');
+const dbInstance = new sqlite3.Database(dbFile, (err) => {
   if (err) {
-    console.error('Error connecting to MySQL:', err);
+    console.error('Error connecting to SQLite:', err.message);
     return;
   }
-  console.log('Connected to MySQL database.');
+  console.log('Connected to SQLite database.');
   
-  // Auto-migrate schema: Ensure receiver_id exists for 1-on-1 chats
-  db.query("SHOW COLUMNS FROM messages LIKE 'receiver_id'", (err, results) => {
-    if (!err && results.length === 0) {
-      db.query("ALTER TABLE messages ADD COLUMN receiver_id INT DEFAULT NULL", (err) => {
-        if (!err) {
-          db.query("ALTER TABLE messages ADD FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE");
-          console.log('Successfully added receiver_id to messages table.');
-        } else {
-          console.error('Failed to add receiver_id:', err);
+  // Enable foreign keys
+  dbInstance.run('PRAGMA foreign_keys = ON;', (err) => {
+    if (err) console.error('Failed to enable foreign keys:', err);
+  });
+
+  // Initialize schema
+  const schemaPath = path.join(__dirname, '..', 'schema.sql');
+  if (fs.existsSync(schemaPath)) {
+    const schema = fs.readFileSync(schemaPath, 'utf8');
+    dbInstance.exec(schema, (err) => {
+      if (err) {
+        console.error('Failed to initialize schema:', err);
+      } else {
+        console.log('Schema initialized.');
+      }
+    });
+  }
+});
+
+// Wrapper to mimic mysql2's db.query API
+const db = {
+  query: function(sql, params, callback) {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    
+    const queryType = sql.trim().toUpperCase().split(' ')[0];
+    const isSelect = queryType === 'SELECT' || queryType === 'PRAGMA';
+
+    if (isSelect) {
+      dbInstance.all(sql, params, (err, rows) => {
+        callback(err, rows);
+      });
+    } else {
+      dbInstance.run(sql, params, function(err) {
+        if (callback) {
+          callback(err, err ? null : { insertId: this.lastID, affectedRows: this.changes });
         }
       });
     }
-  });
-});
+  }
+};
 
 // Middleware to authenticate JWT
 const authenticateToken = (req, res, next) => {
@@ -66,7 +90,7 @@ app.post('/api/auth/signup', (req, res) => {
   const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
   db.query(query, [username, password], (err, results) => {
     if (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
+      if (err.code === 'ER_DUP_ENTRY' || (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE'))) {
         return res.status(400).json({ error: 'Username already exists' });
       }
       return res.status(500).json({ error: 'Database error' });
