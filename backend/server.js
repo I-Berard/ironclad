@@ -4,13 +4,26 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const https = require('https');
+const urllib = require('url');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Content Security Policy
+// Requires bypassing to achieve XSS. Hint: cdnjs is allowed.
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:;"
+  );
+  next();
+});
 
 // Database connection
 const dbFile = path.join(__dirname, 'database.sqlite');
@@ -197,6 +210,55 @@ app.put('/api/profile', authenticateToken, (req, res) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json({ message: 'Profile updated successfully', bio });
   });
+});
+
+// --- NEW CTF FEATURES ---
+
+// Server-Side Request Forgery (SSRF)
+app.post('/api/preview', authenticateToken, (req, res) => {
+  const { target } = req.body;
+  if (!target) return res.status(400).json({ error: 'Target URL is required' });
+  
+  try {
+    const parsed = urllib.parse(target);
+    const client = parsed.protocol === 'https:' ? https : http;
+    
+    // "Security" check
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      return res.status(403).json({ error: 'Localhost is blocked for security reasons!' });
+    }
+
+    client.get(target, (response) => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => {
+        res.json({ preview: data.substring(0, 150) + '...' });
+      });
+    }).on('error', (err) => {
+      res.status(500).json({ error: 'Failed to fetch URL' });
+    });
+  } catch(e) {
+    res.status(400).json({ error: 'Invalid URL' });
+  }
+});
+
+// Hidden Admin Endpoint (Requires SSRF to access)
+app.get('/api/admin/flag', (req, res) => {
+  const ip = req.connection.remoteAddress;
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
+    return res.json({ flag: process.env.FLAG || 'FLAG{ssrfs_are_fun_when_you_bypass_filters}' });
+  }
+  return res.status(403).json({ error: 'Access denied. Admin only. Must access from localhost.' });
+});
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, '0.0.0.0', () => {
