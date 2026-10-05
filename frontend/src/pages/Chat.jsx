@@ -85,6 +85,28 @@ const Chat = () => {
     navigate('/login');
   };
 
+  const handlePreview = async () => {
+    if (!newMessage.trim()) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/preview`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ target: newMessage })
+      });
+      const data = await response.json();
+      if (data.preview) {
+        setNewMessage(newMessage + `\n\n[Preview: ${data.preview}]`);
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error('Failed to fetch preview');
+    }
+  };
+
   const openChat = (id, userObj = null) => {
     setActiveChat(id);
     setActiveChatUser(userObj);
@@ -176,10 +198,16 @@ const Chat = () => {
 
         <div className="input-area">
           <form className="input-container" onSubmit={handleSend}>
-            <span style={{padding: '0 0.5rem', color: '#94a3b8', cursor: 'pointer'}}>📷</span>
+            <span 
+              style={{padding: '0 0.5rem', color: '#94a3b8', cursor: 'pointer'}}
+              title="Preview URL"
+              onClick={handlePreview}
+            >
+              🔗
+            </span>
             <input 
               type="text" 
-              placeholder="Type Your Message" 
+              placeholder="Type Your Message or URL" 
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
             />
