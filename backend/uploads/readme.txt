@@ -1,0 +1,1 @@
+This directory stores user-uploaded files. Enjoy!
