@@ -10,8 +10,8 @@ RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Setup the backend and final image
-FROM node:18-alpine
+# Stage 2: Setup the backend and final image (using debian-slim for prebuilt native binary support)
+FROM node:18-slim
 WORKDIR /app
 
 # Copy the SQLite schema required by the backend
