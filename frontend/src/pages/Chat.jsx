@@ -143,7 +143,7 @@ const Chat = () => {
             </div>
           </div>
           
-          <div style={{margin: '1rem 0', fontWeight: 500, color: 'var(--text-gray)', padding: '0 1rem'}}>Direct Messages</div>
+          <div style={{margin: '1rem 0', fontWeight: 500, color: 'var(--text-gray)', padding: '0 1rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px'}}>Direct Messages</div>
           
           {users.map((u) => (
             <div 
@@ -199,7 +199,7 @@ const Chat = () => {
         <div className="input-area">
           <form className="input-container" onSubmit={handleSend}>
             <span 
-              style={{padding: '0 0.5rem', color: '#94a3b8', cursor: 'pointer'}}
+              style={{padding: '0 0.5rem', color: '#4a5580', cursor: 'pointer'}}
               title="Preview URL"
               onClick={handlePreview}
             >
