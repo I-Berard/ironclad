@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey_donotuseinprod';
 
 app.use(cors());
 app.use(express.json());
@@ -110,7 +111,7 @@ const authenticateToken = (req, res, next) => {
     // fall through to normal jwt.verify
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = user;
     next();
@@ -139,7 +140,7 @@ app.post('/api/auth/signup', (req, res) => {
     
     // Auto-login upon signup
     const user = { id: results.insertId, username: username, bio: null, is_admin: 0 };
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
     res.status(201).json({ token, user, message: 'User created successfully' });
   });
 });
@@ -164,7 +165,7 @@ app.post('/api/auth/login', (req, res) => {
     if (results.length > 0) {
       // The first result returned is logged in
       const user = results[0];
-      const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
       res.json({ token, user: { id: user.id, username: user.username, bio: user.bio } });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
