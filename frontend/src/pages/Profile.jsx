@@ -69,7 +69,7 @@ const Profile = () => {
           {error ? (
             <div className="error-text">{error}</div>
           ) : profile ? (
-            <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '30px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '4px', width: '100%', maxWidth: '400px', boxShadow: '0 0 40px rgba(0,255,65,0.06)', border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="avatar" style={{ width: '60px', height: '60px', fontSize: '1.5rem' }}>
                   {profile.username.charAt(0).toUpperCase()}
@@ -116,7 +116,7 @@ const Profile = () => {
                   />
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button type="submit" style={{ borderRadius: '15px' }}>Save</button>
-                    <button type="button" onClick={() => setEditMode(false)} style={{ background: '#e2e8f0', color: 'var(--text-dark)', borderRadius: '15px' }}>
+                    <button type="button" onClick={() => setEditMode(false)} style={{ borderRadius: '2px' }}>
                       Cancel
                     </button>
                   </div>
